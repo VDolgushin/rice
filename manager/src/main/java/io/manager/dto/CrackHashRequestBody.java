@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class CrackHashRequestBody {
 
-    String hash;
+    private String hash;
 
-    int maxLength;
+    private int maxLength;
 }

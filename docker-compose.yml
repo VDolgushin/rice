@@ -1,0 +1,20 @@
+services:
+  worker:
+    image: worker:latest
+    ports:
+      - 8001:8000
+    env_file: ./manager/.env
+    networks:
+      - backend
+  manager:
+    image: manager:latest
+    container_name: manager
+    ports:
+      - 8002:8000
+    env_file: ./worker/.env
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

@@ -14,6 +14,6 @@ public interface PublicHashApi {
     ResponseEntity<CrackHashResponse> crackHash(@Valid @RequestBody CrackHashRequestBody crackHashRequestBody);
 
     @GetMapping("/status")
-    ResponseEntity<RequestStatusResponse> getRequestStatus(@Valid @PathVariable(name="requestId") String requestId);
+    ResponseEntity<RequestStatusResponse> getRequestStatus(@Valid @RequestParam(name = "requestId") String requestId);
 
 }

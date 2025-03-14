@@ -1,0 +1,19 @@
+spring:
+  config:
+    import: file:.env[.properties]
+  application:
+    name: worker
+  worker:
+    uri: ${WORKER_URI}
+  manager:
+    uri: ${MANAGER_URI}
+  hash:
+    alphabet: ${HASH_ALPHABET}
+    algorithm: ${HASH_ALGORITHM}
+    generated-combinations-count: ${GENERATED_COMBINATIONS_COUNT}
+
+server:
+  port: 8000
+springdoc:
+  swagger-ui:
+    path: /docs
