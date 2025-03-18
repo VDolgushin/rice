@@ -17,5 +17,4 @@ public class TaskEntity {
     @With
     private int partNumber;
     private int partCount;
-    private Long createdAt;
 }

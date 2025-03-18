@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RequestRepository {
     ConcurrentHashMap<UUID, RequestEntity> requestsMap = new ConcurrentHashMap<>();
 
-    public void addRequest(UUID requestId) {
-        RequestEntity requestEntity = new RequestEntity(requestId, RequestStatus.IN_PROGRESS, new ArrayList<>(), new Date().getTime(), 0);
+    public void addRequest(UUID requestId, int completionProgress) {
+        RequestEntity requestEntity = new RequestEntity(requestId, RequestStatus.IN_PROGRESS, new ArrayList<>(), completionProgress);
         requestsMap.put(requestId, requestEntity);
     }
 

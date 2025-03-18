@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@RequestMapping(value = "/internal/api/worker/hash/")
+@RequestMapping(value = "/internal/worker/")
 public interface InternalHashApi {
-    @PostMapping("/crack/task")
+    @PostMapping("/task")
     ResponseEntity<DetailResponse> postTask(@Valid @RequestBody CrackHashTaskRequestBody crackHashTaskRequestBody);
 }

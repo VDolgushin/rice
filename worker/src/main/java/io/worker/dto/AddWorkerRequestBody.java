@@ -1,13 +1,14 @@
-package io.manager.dto;
+package io.worker.dto;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.validation.annotation.Validated;
 
 @Data
 @Validated
-public class DetailResponse {
+@AllArgsConstructor
+public class AddWorkerRequestBody {
     @NotNull
-    private final String detail;
+    private String workerURI;
 }

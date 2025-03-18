@@ -13,6 +13,5 @@ public class RequestEntity {
     private UUID requestId;
     private RequestStatus status;
     private List<String> data;
-    private long cratedAt;
     private int completionProgress;
 }

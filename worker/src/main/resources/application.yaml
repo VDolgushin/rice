@@ -1,19 +1,27 @@
 spring:
-  config:
-    import: file:.env[.properties]
   application:
     name: worker
   worker:
     uri: ${WORKER_URI}
   manager:
     uri: ${MANAGER_URI}
+    port: ${MANAGER_SERVICE_PORT}
+    api-path: ${MANAGER_API_PATH}
+    endpoints:
+      crack-result: ${MANAGER_CRACK_RESULT_ENDPOINT}
+      workers: ${MANAGER_WORKERS_ENDPOINT}
   hash:
     alphabet: ${HASH_ALPHABET}
     algorithm: ${HASH_ALGORITHM}
     generated-combinations-count: ${GENERATED_COMBINATIONS_COUNT}
 
+management:
+  endpoint:
+    health:
+      show-details: never
+
 server:
-  port: 8000
+  port: ${SERVER_PORT}
 springdoc:
   swagger-ui:
     path: /docs
