@@ -38,8 +38,8 @@ public class WorkersPool {
     }
 
     public void addWorker(String workerURI){
-        System.out.println(workerURI);
         workers.put(workerURI, new WorkerInfo(WorkerStatus.IDLE, null));
+        log.info("Worker: {} is added to the pool", workerURI);
     }
 
     public int getWorkersCount(){
@@ -74,11 +74,12 @@ public class WorkersPool {
     }
 
     private void removeWorker(String workerURI){
-        workers.remove(workerURI);
         var task = workers.get(workerURI).currentTask;
+        workers.remove(workerURI);
         if(task != null){
             tasksQuery.add(task);
         }
+        log.info("Worker: {} is unavailable and removed from the pool", workerURI);
     }
 
     private void postTaskToWorker(String workerURI, TaskEntity taskEntity) {
