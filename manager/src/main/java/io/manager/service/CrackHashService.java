@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -26,7 +27,7 @@ public class CrackHashService {
     private final WorkersPool workersPool;
 
 
-    public CrackHashResponse addRequest(CrackHashRequestBody crackHashRequestBody) throws NoWorkersAvailableException {
+    public CrackHashResponse addRequest(CrackHashRequestBody crackHashRequestBody) {
         TaskEntity taskEntity = new TaskEntity();
         taskMapper.toModel(crackHashRequestBody, taskEntity);
         taskEntity.setRequestId(UUID.randomUUID());
@@ -34,11 +35,12 @@ public class CrackHashService {
         int workersCount = workersPool.getWorkersCount();
 
         if(workersCount == 0){
-            throw new NoWorkersAvailableException("No available workers at the moment, please try again later");
+            workersCount = 1;
         }
 
         taskEntity.setPartCount(workersCount);
-        requestRepository.addRequest(taskEntity.getRequestId(), workersCount);
+        var request = new RequestEntity(taskEntity.getRequestId().toString(), RequestStatus.IN_PROGRESS, new ArrayList<>(), workersCount);
+        requestRepository.insert(request);
         addWorkersTasks(taskEntity);
 
         log.info("Crack hash request: {} successfully added", taskEntity);
@@ -46,16 +48,17 @@ public class CrackHashService {
     }
 
     public RequestStatusResponse getRequest(UUID requestId) throws RequestNotFoundException {
-        RequestEntity requestEntity = requestRepository.getRequest(requestId);
-        if(requestEntity == null){
+        var getRequestEntity = requestRepository.findById(requestId.toString());
+        if(getRequestEntity.isEmpty()){
             throw new RequestNotFoundException("Request with id: " + requestId + " not found");
         }
+        var requestEntity = getRequestEntity.get();
         RequestStatusResponse requestStatusResponse = new RequestStatusResponse();
         requestMapper.toModel(requestEntity, requestStatusResponse);
         return requestStatusResponse;
     }
 
-    public void completeTask(CrackHashTaskResponseBody crackHashTaskResponseBody) {
+    public void completeTask(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
         workersPool.completeTask(crackHashTaskResponseBody.getTaskId());
         updateRequest(crackHashTaskResponseBody);
         log.info("Task with id: {} successfully completed", crackHashTaskResponseBody.getTaskId());
@@ -66,8 +69,12 @@ public class CrackHashService {
         log.info("Worker: {} successfully added", addWorkerRequestBody);
     }
 
-    private synchronized void updateRequest(CrackHashTaskResponseBody crackHashTaskResponseBody) {
-        var requestEntity = requestRepository.getRequest(crackHashTaskResponseBody.getRequestId());
+    private synchronized void updateRequest(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
+        var getRequestEntity = requestRepository.findById(crackHashTaskResponseBody.getRequestId().toString());
+        if(getRequestEntity.isEmpty()){
+            throw new RequestNotFoundException("Request with id: " + crackHashTaskResponseBody.getRequestId() + " not found");
+        }
+        var requestEntity = getRequestEntity.get();
         if (requestEntity.getStatus().equals(RequestStatus.ERROR)) {
             return;
         }
@@ -77,7 +84,7 @@ public class CrackHashService {
         if (requestEntity.getCompletionProgress() == 0) {
             requestEntity.setStatus(RequestStatus.READY);
         }
-        requestRepository.updateRequest(requestEntity);
+        requestRepository.save(requestEntity);
         log.info("Request successfully updated: {}", requestEntity);
     }
 

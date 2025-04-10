@@ -4,9 +4,9 @@ services:
     container_name: manager
     ports:
       - 8002:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file: ./manager/.env
-    networks:
-      - backend
     healthcheck:
       test: "curl --fail --silent localhost:8000/actuator/health | grep UP || exit 1"
       interval: 5s
@@ -14,17 +14,57 @@ services:
       start_interval: 30s
       retries: 10
 
-  worker:
-    image: worker:latest
-    env_file: ./worker/.env
-    networks:
-      - backend
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      manager:
-        condition: service_healthy
 
-networks:
-  backend:
-    driver: bridge
+  mongo1:
+    image: mongo
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27016"]
+    ports:
+      - 27016:27016
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27016'},{_id:1,host:'host.docker.internal:27018'},{_id:2,host:'host.docker.internal:27019'}]}) }" | mongosh --port 27016 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      start_interval: 1s
+      retries: 30
+    volumes:
+      - "mongo1_data:/data/db"
+      - "mongo1_config:/data/configdb"
+    env_file:
+      - .env
+
+  mongo2:
+    image: mongo
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    ports:
+      - 27018:27018
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - "mongo2_data:/data/db"
+      - "mongo2_config:/data/configdb"
+    env_file:
+      - .env
+
+  mongo3:
+    image: mongo
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    ports:
+      - 27019:27019
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - "mongo3_data:/data/db"
+      - "mongo3_config:/data/configdb"
+    env_file:
+      - .env
+
+volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  mongo1_config:
+  mongo2_config:
+  mongo3_config:

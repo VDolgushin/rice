@@ -4,6 +4,7 @@ import io.manager.api.InternalHashApi;
 import io.manager.dto.AddWorkerRequestBody;
 import io.manager.dto.CrackHashTaskResponseBody;
 import io.manager.dto.DetailResponse;
+import io.manager.exception.RequestNotFoundException;
 import io.manager.service.CrackHashService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,7 @@ public class InternalHashController implements InternalHashApi {
     private final CrackHashService crackHashService;
 
     @Override
-    public ResponseEntity<DetailResponse> postHashCrackResult(CrackHashTaskResponseBody crackHashTaskResponseBody) {
+    public ResponseEntity<DetailResponse> postHashCrackResult(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
         log.info("Post worker crack hash result request. Request body: {}", crackHashTaskResponseBody);
         crackHashService.completeTask(crackHashTaskResponseBody);
         return ResponseEntity.ok(new DetailResponse("Task successfully completed"));

@@ -22,7 +22,7 @@ public class PublicHashController implements PublicHashApi {
     private final CrackHashService crackHashService;
 
     @Override
-    public ResponseEntity<CrackHashResponse> crackHash(CrackHashRequestBody crackHashRequestBody) throws NoWorkersAvailableException {
+    public ResponseEntity<CrackHashResponse> crackHash(CrackHashRequestBody crackHashRequestBody){
         log.info("Post crack hash request. Request body: {}", crackHashRequestBody);
         CrackHashResponse crackHashResponse = crackHashService.addRequest(crackHashRequestBody);
         return ResponseEntity.ok(crackHashResponse);

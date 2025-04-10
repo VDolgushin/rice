@@ -6,9 +6,10 @@ spring:
     api-path: ${WORKER_API_PATH}
     endpoints:
       task: ${WORKER_TASK_ENDPOINT}
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_R0_HOST}:${MONGO_R0_PORT},${MONGO_R1_HOST}:${MONGO_R1_PORT},${MONGO_R2_HOST}:${MONGO_R2_PORT}/${MONGO_DATABASE}?replicaSet=rs0
+      auto-index-creation: true
 
 management:
   endpoint:
@@ -21,3 +22,7 @@ springdoc:
   swagger-ui:
     path: /docs
 
+
+#mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_R0_HOST}:{MONGO_R0_PORT},{MONGO_R1_HOST}:{MONGO_R1_PORT},{MONGO_R2_HOST}:{MONGO_R2_PORT}/{MONGO_DATABASE}
+
+#mongodb://user:123321@127.0.0.1:27016,127.0.0.1:27018,127.0.0.1:27019/crackhash
