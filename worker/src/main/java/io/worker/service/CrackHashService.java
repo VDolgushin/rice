@@ -14,11 +14,13 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -95,6 +97,11 @@ public class CrackHashService {
             }
         }
         return null;
+    }
+
+    @RabbitListener(queues = "queue.Tasks")
+    private void receiveTask(CrackHashTaskRequestBody crackHashTaskRequestBody) {
+
     }
 
     @Async

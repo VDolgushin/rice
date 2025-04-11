@@ -11,7 +11,9 @@ import io.manager.service.mapper.TaskMapper;
 import io.manager.service.workerspool.WorkersPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,7 +28,7 @@ public class CrackHashService {
     private final RequestMapper requestMapper;
     private final WorkersPool workersPool;
 
-
+    @Transactional
     public CrackHashResponse addRequest(CrackHashRequestBody crackHashRequestBody) {
         TaskEntity taskEntity = new TaskEntity();
         taskMapper.toModel(crackHashRequestBody, taskEntity);
@@ -47,6 +49,7 @@ public class CrackHashService {
         return new CrackHashResponse(taskEntity.getRequestId());
     }
 
+    @Transactional
     public RequestStatusResponse getRequest(UUID requestId) throws RequestNotFoundException {
         var getRequestEntity = requestRepository.findById(requestId.toString());
         if(getRequestEntity.isEmpty()){
@@ -67,6 +70,11 @@ public class CrackHashService {
     public void addWorker(AddWorkerRequestBody addWorkerRequestBody){
         workersPool.addWorker(addWorkerRequestBody.getWorkerURI());
         log.info("Worker: {} successfully added", addWorkerRequestBody);
+    }
+
+    @RabbitListener(queues = "queue.Results")
+    private void receiveTask(CrackHashTaskRequestBody crackHashTaskRequestBody) {
+
     }
 
     private synchronized void updateRequest(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
