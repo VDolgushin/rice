@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
 
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -29,6 +31,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 
@@ -38,14 +41,13 @@ import static org.paukov.combinatorics.CombinatoricsFactory.createVector;
 @Service
 @Slf4j
 public class CrackHashService {
-    private List<String> words;
+    private HashSet<String> words;
     private final MessageDigest md;
 
     @Value("${spring.hash.generated-combinations-count}")
     private int generateCount;
     private String[] alphabet;
     private final RestClient restClient = RestClient.create();
-
     @Value("${spring.manager.uri}")
     private String managerURI;
     @Value("${spring.manager.port}")
@@ -57,11 +59,18 @@ public class CrackHashService {
     @Value("${spring.manager.endpoints.workers}")
     private String managerWorkerEndpoint;
 
+    private final RabbitTemplate rabbitTemplate;
+    private final DirectExchange directExchange;
+
     @Autowired
     public CrackHashService(@Value("${spring.hash.alphabet}") String alphabet,
-                            @Value("${spring.hash.algorithm}") String hashAlgorithm) throws NoSuchAlgorithmException, UnknownHostException {
+                            @Value("${spring.hash.algorithm}") String hashAlgorithm,
+                            RabbitTemplate rabbitTemplate,
+                            DirectExchange directExchange) throws NoSuchAlgorithmException, UnknownHostException {
         this.alphabet = alphabet.split("");
         this.md = MessageDigest.getInstance(hashAlgorithm);
+        this.rabbitTemplate = rabbitTemplate;
+        this.directExchange = directExchange;
     }
 
     @PostConstruct
@@ -99,27 +108,15 @@ public class CrackHashService {
         return null;
     }
 
-    @RabbitListener(queues = "queue.Tasks")
-    private void receiveTask(CrackHashTaskRequestBody crackHashTaskRequestBody) {
-
-    }
-
-    @Async
     public void crackHash(CrackHashTaskRequestBody crackHashTaskRequestBody){
-        log.info("Task started");
-        words = new ArrayList<>();
+        words = new HashSet<>();
         for (int i = 1; i <= crackHashTaskRequestBody.getMaxLength(); i++){
             System.out.println(i);
             crackHashFixedLength(i, crackHashTaskRequestBody.getPartNumber(),
                     crackHashTaskRequestBody.getPartCount(), crackHashTaskRequestBody.getHash());
         }
-        CrackHashTaskResponseBody crackHashTaskResponseBody = new CrackHashTaskResponseBody(crackHashTaskRequestBody.getRequestId(), words, crackHashTaskRequestBody.getTaskId());
-        var response = restClient.post()
-                .uri("http://" + managerURI + ":" + managerPort + managerApiPath + managerCrackResultEndpoint)
-                .body(crackHashTaskResponseBody)
-                .retrieve()
-                .toEntity(String.class);
-        log.info("Task completed and sent to manager. Manager response: {}",response);
+        CrackHashTaskResponseBody crackHashTaskResponseBody = new CrackHashTaskResponseBody(crackHashTaskRequestBody.getRequestId(), words,  crackHashTaskRequestBody.getPartNumber(), crackHashTaskRequestBody.getTaskId());
+        rabbitTemplate.convertAndSend(directExchange.getName(), "Results",crackHashTaskResponseBody);
     }
 
     private void crackHashFixedLength(int length, int partNumber, int partCount, String hash){

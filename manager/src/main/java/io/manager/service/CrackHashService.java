@@ -3,7 +3,6 @@ package io.manager.service;
 import io.manager.dto.*;
 import io.manager.entity.RequestEntity;
 import io.manager.entity.TaskEntity;
-import io.manager.exception.NoWorkersAvailableException;
 import io.manager.exception.RequestNotFoundException;
 import io.manager.repository.RequestRepository;
 import io.manager.service.mapper.RequestMapper;
@@ -11,13 +10,10 @@ import io.manager.service.mapper.TaskMapper;
 import io.manager.service.workerspool.WorkersPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -41,8 +37,9 @@ public class CrackHashService {
         }
 
         taskEntity.setPartCount(workersCount);
-        var request = new RequestEntity(taskEntity.getRequestId().toString(), RequestStatus.IN_PROGRESS, new ArrayList<>(), workersCount);
+        var request = new RequestEntity(taskEntity.getRequestId().toString(), RequestStatus.IN_PROGRESS, new HashSet<>(), new boolean[workersCount]);
         requestRepository.insert(request);
+        System.out.println(request);
         addWorkersTasks(taskEntity);
 
         log.info("Crack hash request: {} successfully added", taskEntity);
@@ -58,6 +55,7 @@ public class CrackHashService {
         var requestEntity = getRequestEntity.get();
         RequestStatusResponse requestStatusResponse = new RequestStatusResponse();
         requestMapper.toModel(requestEntity, requestStatusResponse);
+        requestStatusResponse.setDetail("Completion progress: " + calcCompletionPercent(requestEntity.getCompletionProgress()) + "%");
         return requestStatusResponse;
     }
 
@@ -72,12 +70,8 @@ public class CrackHashService {
         log.info("Worker: {} successfully added", addWorkerRequestBody);
     }
 
-    @RabbitListener(queues = "queue.Results")
-    private void receiveTask(CrackHashTaskRequestBody crackHashTaskRequestBody) {
-
-    }
-
-    private synchronized void updateRequest(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
+    @Transactional
+    private void updateRequest(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
         var getRequestEntity = requestRepository.findById(crackHashTaskResponseBody.getRequestId().toString());
         if(getRequestEntity.isEmpty()){
             throw new RequestNotFoundException("Request with id: " + crackHashTaskResponseBody.getRequestId() + " not found");
@@ -88,8 +82,8 @@ public class CrackHashService {
         }
         log.info("Updating request: {}", requestEntity);
         requestEntity.getData().addAll(crackHashTaskResponseBody.getWords());
-        requestEntity.setCompletionProgress(requestEntity.getCompletionProgress() - 1);
-        if (requestEntity.getCompletionProgress() == 0) {
+        requestEntity.getCompletionProgress()[crackHashTaskResponseBody.getPartNumber()-1]= true;
+        if (taskIsCompleted(requestEntity.getCompletionProgress())) {
             requestEntity.setStatus(RequestStatus.READY);
         }
         requestRepository.save(requestEntity);
@@ -100,5 +94,24 @@ public class CrackHashService {
         for (int i = 1; i <= taskEntity.getPartCount(); i++) {
             workersPool.addRequest(taskEntity.withPartNumber(i));
         }
+    }
+
+    private boolean taskIsCompleted(boolean [] completionProgress){
+        for(var p : completionProgress){
+            if(!p){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private int calcCompletionPercent(boolean [] completionProgress){
+        int c = 0;
+        for(var p : completionProgress){
+            if(p){
+                c++;
+            }
+        }
+        return (int)(((double)c/completionProgress.length)*100);
     }
 }

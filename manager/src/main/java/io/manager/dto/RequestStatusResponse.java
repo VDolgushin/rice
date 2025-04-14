@@ -15,4 +15,6 @@ public class RequestStatusResponse {
 
     @NotNull
     private List<String> data;
+
+    private String detail;
 }

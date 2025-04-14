@@ -18,13 +18,6 @@ public class InternalHashController implements InternalHashApi {
     private final CrackHashService crackHashService;
 
     @Override
-    public ResponseEntity<DetailResponse> postHashCrackResult(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
-        log.info("Post worker crack hash result request. Request body: {}", crackHashTaskResponseBody);
-        crackHashService.completeTask(crackHashTaskResponseBody);
-        return ResponseEntity.ok(new DetailResponse("Task successfully completed"));
-    }
-
-    @Override
     public ResponseEntity<DetailResponse> addWorker(AddWorkerRequestBody addWorkerRequestBody) {
         log.info("Post worker request. Request body: {}", addWorkerRequestBody);
         crackHashService.addWorker(addWorkerRequestBody);

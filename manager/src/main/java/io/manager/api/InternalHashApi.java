@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @RequestMapping(value = "/internal/manager/crack-hash/")
 public interface InternalHashApi {
-    @PostMapping("/crack-result")
-    ResponseEntity<DetailResponse> postHashCrackResult(@Valid @RequestBody CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException;
 
     @PostMapping("/workers")
     ResponseEntity<DetailResponse> addWorker(@Valid @RequestBody AddWorkerRequestBody addWorkerRequestBody);

@@ -15,18 +15,28 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfiguration {
     @Bean
-    Queue queueA() {
-        return new Queue("queue.Results", false);
+    Queue queueTasks() {
+        return new Queue("queue.Tasks", true);
+    }
+
+    @Bean
+    Queue queueResults() {
+        return new Queue("queue.Results", true);
     }
 
     @Bean
     DirectExchange exchange() {
-        return new DirectExchange("exchange.direct");
+        return new DirectExchange("exchange.direct",true,false);
     }
 
     @Bean
-    Binding bindingA(Queue queueA, DirectExchange exchange) {
-        return BindingBuilder.bind(queueA).to(exchange).withQueueName();
+    Binding bindingTasks(Queue queueTasks, DirectExchange exchange) {
+        return BindingBuilder.bind(queueTasks).to(exchange).with("Tasks");
+    }
+
+    @Bean
+    Binding bindingResults(Queue queueResults, DirectExchange exchange) {
+        return BindingBuilder.bind(queueResults).to(exchange).with("Results");
     }
 
     @Bean

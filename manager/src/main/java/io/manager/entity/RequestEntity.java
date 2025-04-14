@@ -5,8 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 @Document(collection = "requests")
 @Getter
@@ -19,7 +18,7 @@ public class RequestEntity {
 
     private RequestStatus status;
 
-    private List<String> data;
+    private Set<String> data;
 
-    private int completionProgress;
+    private boolean [] completionProgress;
 }

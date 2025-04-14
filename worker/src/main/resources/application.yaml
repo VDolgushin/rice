@@ -14,6 +14,11 @@ spring:
     alphabet: ${HASH_ALPHABET}
     algorithm: ${HASH_ALGORITHM}
     generated-combinations-count: ${GENERATED_COMBINATIONS_COUNT}
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
 
 management:
   endpoint:

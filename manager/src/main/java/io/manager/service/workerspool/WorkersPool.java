@@ -4,7 +4,10 @@ import io.manager.dto.CrackHashTaskRequestBody;
 import io.manager.dto.HealthResponse;
 import io.manager.entity.TaskEntity;
 import io.manager.service.mapper.TaskMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,6 +19,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class WorkersPool {
 
     @Value("${spring.worker.port}")
@@ -27,9 +31,9 @@ public class WorkersPool {
 
     private final ConcurrentHashMap<String, WorkerInfo> workers = new ConcurrentHashMap<>();
     private final RestClient restClient = RestClient.create();
-
-    @Autowired
-    private TaskMapper taskMapper;
+    private final TaskMapper taskMapper;
+    private final RabbitTemplate rabbitTemplate;
+    private final DirectExchange directExchange;
 
     ConcurrentLinkedQueue<TaskEntity> tasksQuery = new ConcurrentLinkedQueue<>();
 
@@ -73,12 +77,7 @@ public class WorkersPool {
         }
     }
 
-    private void removeWorker(String workerURI){
-        var task = workers.get(workerURI).currentTask;
-        workers.remove(workerURI);
-        if(task != null){
-            tasksQuery.add(task);
-        }
+    private void removeWorker(String workerURI){workers.remove(workerURI);
         log.info("Worker: {} is unavailable and removed from the pool", workerURI);
     }
 
@@ -90,12 +89,10 @@ public class WorkersPool {
         CrackHashTaskRequestBody crackHashTaskRequestBody = new CrackHashTaskRequestBody();
         taskMapper.toModel(taskEntity, crackHashTaskRequestBody);
         crackHashTaskRequestBody.setTaskId(workerURI);
-        var response = restClient.post()
-                .uri("http://" + workerURI + ":" + workerPort + workerApiPath + workerTaskEndpoint)
-                .body(crackHashTaskRequestBody)
-                .retrieve()
-                .toEntity(String.class);
-        log.info("Task: {} sent to worker: {}. Worker response: {}",taskEntity, workerURI, response);
+
+        rabbitTemplate.convertAndSend(directExchange.getName(), "Tasks",crackHashTaskRequestBody);
+
+        log.info("Task: {} sent to worker: {}",taskEntity, workerURI);
     }
 
     public void completeTask(String workerURI) {

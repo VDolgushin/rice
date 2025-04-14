@@ -3,7 +3,7 @@ services:
     image: manager:latest
     container_name: manager
     ports:
-      - 8002:8000
+      - 8004:8000
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file: ./manager/.env
@@ -13,6 +13,19 @@ services:
       timeout: 2s
       start_interval: 30s
       retries: 10
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+
+  worker:
+    image: worker:latest
+    env_file: ./worker/.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      manager:
+        condition: service_healthy
 
 
   mongo1:
@@ -23,9 +36,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27016',priority:1},{_id:1,host:'host.docker.internal:27018',priority:0.5},{_id:2,host:'host.docker.internal:27019,priority:0.5'}]}) }" | mongosh --port 27016 --quiet
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27016',priority:1},{_id:1,host:'host.docker.internal:27018',priority:0.5},{_id:2,host:'host.docker.internal:27019',priority:0.5}]}) }" | mongosh --port 27016 --quiet
       interval: 5s
-      timeout: 30s
+      timeout: 10s
       start_period: 0s
       start_interval: 1s
       retries: 30
@@ -40,6 +53,12 @@ services:
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
     ports:
       - 27018:27018
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo2:27018/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -53,6 +72,12 @@ services:
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
     ports:
       - 27019:27019
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo3:27019/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -61,7 +86,6 @@ services:
     env_file:
       - .env
 
-
   rabbitmq:
     image: rabbitmq:4.0-management
     hostname: rabbitmq
@@ -69,7 +93,24 @@ services:
     volumes:
       - ./rabbitmq:/var/lib/rabbitmq
     ports:
+      - 5672:5672
       - 15672:15672
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_healthy
+      mongo3:
+        condition: service_healthy
 
 volumes:
   mongo1_data:
