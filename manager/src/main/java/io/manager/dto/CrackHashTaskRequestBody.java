@@ -17,9 +17,6 @@ public class CrackHashTaskRequestBody {
     @NotNull
     private UUID requestId;
 
-    @NotNull
-    private String taskId;
-
     @Min(1)
     @NotNull
     private int partNumber;

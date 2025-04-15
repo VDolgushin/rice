@@ -23,7 +23,4 @@ public class CrackHashTaskResponseBody {
     @Min(1)
     @NotNull
     private int partNumber;
-
-    @NotNull
-    private String taskId;
 }

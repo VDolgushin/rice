@@ -20,6 +20,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -73,7 +74,7 @@ public class CrackHashService {
         this.directExchange = directExchange;
     }
 
-    @PostConstruct
+    @Scheduled(fixedDelay = 10000)
     private void informManager() throws UnknownHostException {
         AddWorkerRequestBody addWorkerRequestBody = new AddWorkerRequestBody(getHostName());
 
@@ -87,6 +88,7 @@ public class CrackHashService {
 
         log.info("Manager add worker request sent. Manager response: {}",response);
     }
+
 
     private String getHostName() throws UnknownHostException {
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
@@ -115,7 +117,7 @@ public class CrackHashService {
             crackHashFixedLength(i, crackHashTaskRequestBody.getPartNumber(),
                     crackHashTaskRequestBody.getPartCount(), crackHashTaskRequestBody.getHash());
         }
-        CrackHashTaskResponseBody crackHashTaskResponseBody = new CrackHashTaskResponseBody(crackHashTaskRequestBody.getRequestId(), words,  crackHashTaskRequestBody.getPartNumber(), crackHashTaskRequestBody.getTaskId());
+        CrackHashTaskResponseBody crackHashTaskResponseBody = new CrackHashTaskResponseBody(crackHashTaskRequestBody.getRequestId(), words, crackHashTaskRequestBody.getPartNumber());
         rabbitTemplate.convertAndSend(directExchange.getName(), "Results",crackHashTaskResponseBody);
     }
 

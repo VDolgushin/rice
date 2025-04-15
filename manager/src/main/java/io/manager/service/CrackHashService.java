@@ -60,9 +60,8 @@ public class CrackHashService {
     }
 
     public void completeTask(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
-        workersPool.completeTask(crackHashTaskResponseBody.getTaskId());
         updateRequest(crackHashTaskResponseBody);
-        log.info("Task with id: {} successfully completed", crackHashTaskResponseBody.getTaskId());
+        log.info("Task successfully completed");
     }
 
     public void addWorker(AddWorkerRequestBody addWorkerRequestBody){
@@ -92,7 +91,7 @@ public class CrackHashService {
 
     private void addWorkersTasks(TaskEntity taskEntity) {
         for (int i = 1; i <= taskEntity.getPartCount(); i++) {
-            workersPool.addRequest(taskEntity.withPartNumber(i));
+            workersPool.addTask(taskEntity.withPartNumber(i));
         }
     }
 
