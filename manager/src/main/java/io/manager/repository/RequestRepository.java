@@ -13,5 +13,4 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 public interface RequestRepository extends MongoRepository<RequestEntity, String> {
-    //RequestEntity requestEntity = new RequestEntity(requestId, RequestStatus.IN_PROGRESS, new ArrayList<>(), completionProgress);
 }

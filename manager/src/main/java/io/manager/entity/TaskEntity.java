@@ -1,16 +1,19 @@
 package io.manager.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.With;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.UUID;
 
-@Data
+@Document(collection = "tasks")
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class TaskEntity {
+    @Id
+    private String taskId;
     private UUID requestId;
     private String hash;
     private int maxLength;

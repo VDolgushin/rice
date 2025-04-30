@@ -3,9 +3,12 @@ package io.manager.service.workerspool;
 import io.manager.dto.CrackHashTaskRequestBody;
 import io.manager.dto.HealthResponse;
 import io.manager.entity.TaskEntity;
+import io.manager.repository.RequestRepository;
+import io.manager.repository.TaskRepository;
 import io.manager.service.mapper.TaskMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +33,13 @@ public class WorkersPool {
     private final TaskMapper taskMapper;
     private final RabbitTemplate rabbitTemplate;
     private final DirectExchange directExchange;
+    private final TaskRepository taskRepository;
+
 
     public void addWorker(String workerURI){
+        if(workers.containsKey(workerURI)){
+            return;
+        }
         workers.put(workerURI, new WorkerInfo(null, null));
         log.info("Worker: {} is added to the pool", workerURI);
     }
@@ -66,9 +74,14 @@ public class WorkersPool {
     public void addTask(TaskEntity taskEntity) {
         CrackHashTaskRequestBody crackHashTaskRequestBody = new CrackHashTaskRequestBody();
         taskMapper.toModel(taskEntity, crackHashTaskRequestBody);
-
-        rabbitTemplate.convertAndSend(directExchange.getName(), "Tasks",crackHashTaskRequestBody);
-
-        log.info("Task: {} sent to worker:",taskEntity);
+        try {
+            log.info("Sending task {} to worker", taskEntity.getTaskId());
+            rabbitTemplate.convertAndSend(directExchange.getName(), "Tasks",crackHashTaskRequestBody);
+            log.info("Task: {} sent to worker:",taskEntity);
+        }
+        catch (AmqpException e){
+            log.info("Rabbitmq is unavailable. Task {} saved to database", taskEntity.getTaskId());
+            taskRepository.save(taskEntity);
+        }
     }
 }

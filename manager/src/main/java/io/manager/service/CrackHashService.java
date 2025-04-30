@@ -3,6 +3,7 @@ package io.manager.service;
 import io.manager.dto.*;
 import io.manager.entity.RequestEntity;
 import io.manager.entity.TaskEntity;
+import io.manager.events.RabbitMQStartEvent;
 import io.manager.exception.RequestNotFoundException;
 import io.manager.repository.RequestRepository;
 import io.manager.service.mapper.RequestMapper;
@@ -10,6 +11,8 @@ import io.manager.service.mapper.TaskMapper;
 import io.manager.service.workerspool.WorkersPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationListener;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,6 @@ public class CrackHashService {
         taskEntity.setRequestId(UUID.randomUUID());
 
         int workersCount = workersPool.getWorkersCount();
-
         if(workersCount == 0){
             workersCount = 1;
         }
@@ -39,7 +41,6 @@ public class CrackHashService {
         taskEntity.setPartCount(workersCount);
         var request = new RequestEntity(taskEntity.getRequestId().toString(), RequestStatus.IN_PROGRESS, new HashSet<>(), new boolean[workersCount]);
         requestRepository.insert(request);
-        System.out.println(request);
         addWorkersTasks(taskEntity);
 
         log.info("Crack hash request: {} successfully added", taskEntity);
