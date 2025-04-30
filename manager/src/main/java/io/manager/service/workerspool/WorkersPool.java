@@ -41,7 +41,7 @@ public class WorkersPool {
             return;
         }
         workers.put(workerURI, new WorkerInfo(null, null));
-        log.info("Worker: {} is added to the pool", workerURI);
+        //log.info("Worker: {} is added to the pool", workerURI);
     }
 
     public int getWorkersCount(){

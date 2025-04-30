@@ -74,11 +74,11 @@ public class CrackHashService {
         this.directExchange = directExchange;
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 5000)
     private void informManager() throws UnknownHostException {
         AddWorkerRequestBody addWorkerRequestBody = new AddWorkerRequestBody(getHostName());
 
-        log.info("Worker uri is: {}, informing manager",addWorkerRequestBody.getWorkerURI());
+        //log.info("Worker uri is: {}, informing manager",addWorkerRequestBody.getWorkerURI());
 
         var response = restClient.post()
                 .uri("http://" + managerURI + ":" + managerPort + managerApiPath + managerWorkerEndpoint)
@@ -86,7 +86,7 @@ public class CrackHashService {
                 .retrieve()
                 .toEntity(String.class);
 
-        log.info("Manager add worker request sent. Manager response: {}",response);
+        //log.info("Manager add worker request sent. Manager response: {}",response);
     }
 
 

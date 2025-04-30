@@ -17,7 +17,6 @@ public class RabbitMQController {
     @RabbitListener(queues = "queue.Results")
     private void receiveTask(CrackHashTaskResponseBody crackHashTaskResponseBody) throws RequestNotFoundException {
         log.info("Task: {} completed by worker", crackHashTaskResponseBody);
-        System.out.println(crackHashService);
         crackHashService.completeTask(crackHashTaskResponseBody);
         log.info("Task completed");
     }

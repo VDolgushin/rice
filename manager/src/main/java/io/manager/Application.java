@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 
 
-//TODO: счётчик - плохонужно запоминать какие воркеры выполнили а какие нет, синхронизация реквестов
+//TODO: rabbitmq лежит и менеджер получает запрос
 
 @SpringBootApplication()
 public class Application {
